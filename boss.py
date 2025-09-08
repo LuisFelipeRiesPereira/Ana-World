@@ -1,45 +1,34 @@
 # boss.py
-import pygame, random
+import pygame, random, math
 from projectile import Projetil
 
 class Boss(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        img = pygame.image.load("assets/images/boss.png").convert_alpha()
-        self.base = pygame.transform.scale(img, (100, 100))
-        self.image = self.base.copy()
-        self.rect = self.image.get_rect(midbottom=(x, y))
+        self.frames = [pygame.Surface((80,80), pygame.SRCALPHA)]
+        pygame.draw.circle(self.frames[0], (120,0,200), (40,40), 40)
+        self.image = self.frames[0]
+        self.rect = self.image.get_rect(topleft=(x,y))
         self.mask = pygame.mask.from_surface(self.image)
-
-        self.vida_max = 20
-        self.vida = self.vida_max
-        self.vel = 2
-        self.direcao = 1
-        self.atk_timer = 0
-
-        # área de patrulha
-        self.min_x = 200
-        self.max_x = 2800
+        self.vida = 40
+        self.min_x = x-200
+        self.max_x = x+200
+        self.dir = 1
+        self.float_phase = 0
+        self.shoot_cd = 90
 
     def update(self, projeteis, todos):
-        # movimento lateral simples
-        self.rect.x += self.vel * self.direcao
-        if self.rect.left < self.min_x or self.rect.right > self.max_x:
-            self.direcao *= -1
-
-        # atirar de tempos em tempos
-        self.atk_timer += 1
-        if self.atk_timer >= 75:
-            self.atk_timer = 0
-            # dispara três projéteis com spread
-            for ang in (-10, 0, 10):
-                proj = Projetil(self.rect.centerx, self.rect.centery - 20, 1 if self.direcao > 0 else -1)
-                proj.from_boss = True
-                # ajuste de velocidade lateral
-                proj.vel = 6 * (1 if self.direcao > 0 else -1)
-                # adiciona pequeno desvio vertical (não física) - não implementado no Projetil, mas ok
-                projeteis.add(proj)
-                todos.add(proj)
+        self.float_phase += 0.05
+        self.rect.y += int(2 * math.sin(self.float_phase))
+        if random.random() < 0.02:
+            self.dir *= -1
+        self.rect.x += self.dir * 2
+        self.rect.x = max(self.min_x, min(self.rect.x, self.max_x))
+        self.shoot_cd -= 1
+        if self.shoot_cd <= 0:
+            proj = Projetil(self.rect.centerx, self.rect.centery, self.dir)
+            projeteis.add(proj); todos.add(proj)
+            self.shoot_cd = random.randint(60,120)
 
     def levar_dano(self, qtd=1):
         self.vida -= qtd
@@ -47,11 +36,8 @@ class Boss(pygame.sprite.Sprite):
             self.kill()
 
     def desenhar_barra(self, tela):
-        barra_w = 240
-        barra_h = 18
-        x = (tela.get_width() - barra_w) // 2
-        y = 16
-        pygame.draw.rect(tela, (0,0,0), (x-2, y-2, barra_w+4, barra_h+4))
-        pygame.draw.rect(tela, (180,0,0), (x, y, barra_w, barra_h))
-        fill_w = int(barra_w * max(0, self.vida / self.vida_max))
-        pygame.draw.rect(tela, (0,200,0), (x, y, fill_w, barra_h))
+        bar_w, bar_h = 200, 16
+        x, y = 20, 20
+        pygame.draw.rect(tela, (0,0,0), (x-2,y-2,bar_w+4,bar_h+4))
+        pygame.draw.rect(tela, (200,0,0), (x,y, bar_w, bar_h))
+        pygame.draw.rect(tela, (0,200,0), (x,y, int(bar_w * (self.vida/40)), bar_h))

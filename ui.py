@@ -5,18 +5,17 @@ class Botao:
     def __init__(self, x, y, largura, altura, texto):
         self.rect = pygame.Rect(x, y, largura, altura)
         self.texto = texto
-        self.fonte = pygame.font.SysFont(None, 30)
-        self.cor_normal = (200,200,200)
-        self.cor_hover = (160,160,160)
+        self.fonte = pygame.font.SysFont(None, 28)
+        self.cor_normal = (80, 80, 80)
+        self.cor_hover = (120, 120, 120)
+        self.cor_texto = (255, 255, 255)
 
     def desenhar(self, tela):
-        mouse = pygame.mouse.get_pos()
-        cor = self.cor_hover if self.rect.collidepoint(mouse) else self.cor_normal
-        pygame.draw.rect(tela, cor, self.rect)
-        pygame.draw.rect(tela, (0,0,0), self.rect, 2)
-        txt = self.fonte.render(self.texto, True, (0,0,0))
-        tela.blit(txt, (self.rect.x + (self.rect.width - txt.get_width())//2,
-                        self.rect.y + (self.rect.height - txt.get_height())//2))
+        cor = self.cor_hover if self.rect.collidepoint(pygame.mouse.get_pos()) else self.cor_normal
+        pygame.draw.rect(tela, cor, self.rect, border_radius=8)
+        pygame.draw.rect(tela, (0, 0, 0), self.rect, 2, border_radius=8)
+        txt = self.fonte.render(self.texto, True, self.cor_texto)
+        tela.blit(txt, (self.rect.centerx - txt.get_width()//2, self.rect.centery - txt.get_height()//2))
 
     def clicado(self, evento):
         if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:

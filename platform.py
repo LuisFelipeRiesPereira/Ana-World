@@ -9,7 +9,7 @@ class Plataforma(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(img, (w, h))
         else:
             self.image = pygame.Surface((w, h))
-            self.image.fill((100,200,100))
+            self.image.fill((100,300,100))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
