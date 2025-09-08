@@ -1,0 +1,17 @@
+# settings.py
+
+# Tela
+LARGURA = 800
+ALTURA = 600
+FPS = 60
+JUMP_FORCE = 20
+GRAVITY = 1
+MAX_FALL = 10
+
+# Cores
+BRANCO = (255, 255, 255)
+PRETO = (0, 0, 0)
+VERDE = (0, 200, 0)
+VERMELHO = (200, 0, 0)
+AZUL = (0, 0, 200)
+DOURADO = (255, 215, 0)
