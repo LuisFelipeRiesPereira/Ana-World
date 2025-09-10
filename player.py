@@ -2,7 +2,7 @@
 import pygame, glob, os, random
 from settings import ALTURA
 
-JUMP_FORCE = 15
+JUMP_FORCE = 20
 GRAVITY = 1
 MAX_FALL = 12
 WALK_SPEED = 4
@@ -130,7 +130,6 @@ class Jogador(pygame.sprite.Sprite):
         if self.anim_index >= len(frames) :
             return
         frame = frames[self.anim_index]
-        print (frame)
 
         if self.bounce_timer > 0:
             t = self.bounce_timer / self.BOUNCE_DUR
