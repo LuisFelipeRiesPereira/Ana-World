@@ -57,27 +57,16 @@ def mostrar_tutorial(tela, clock):
     # candidates - tente vários nomes comuns para cada asset
     candidates = {
         "item": [
-            "assets/images/item.png",
-            "assets/images/item_01.png",
-            "assets/images/collectable.png",
             "assets/images/coin.png"
         ],
         "powerup": [
             "assets/images/powerup.png",
-            "assets/images/power_up.png",
-            "assets/images/power-up.png",
-            "assets/images/powerup_01.png"
         ],
         "enemy": [
-            "assets/images/enemy_idle.png",
-            "assets/images/enemy_idle_01.png",
-            "assets/images/enemy.png",
-            "assets/images/enemy_idle01.png"
+            "assets/images/enemy/idle_01.png",
         ],
         "spike": [
-            "assets/images/spike.png",
-            "assets/images/spike_small.png",
-            "assets/images/espinho.png"
+            "assets/images/spike.png"
         ]
     }
 
@@ -140,18 +129,6 @@ def mostrar_tutorial(tela, clock):
         (None, "Seta para baixo : Atravessar plataformas")
     ]
 
-    # debug: mostra o cwd e lista 'assets/images' se quiser (comente se não quiser no console)
-    try:
-        cwd = os.getcwd()
-        imgs_dir = "assets/images"
-        if os.path.exists(imgs_dir):
-            files = ", ".join(os.listdir(imgs_dir)[:50])
-            print(f"[Tutorial] cwd={cwd} - assets/images tem (até 50): {files}")
-        else:
-            print(f"[Tutorial] cwd={cwd} - pasta assets/images NÃO encontrada")
-    except Exception as e:
-        print("[Tutorial] erro ao listar assets:", e)
-
     while True:
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
@@ -168,7 +145,6 @@ def mostrar_tutorial(tela, clock):
         y = 120
         for img, texto in linhas:
             if img:
-                # garanto escala uniforme (32x32)
                 try:
                     img_s = pygame.transform.smoothscale(img, (32,32))
                 except Exception:
@@ -241,7 +217,7 @@ def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinh
                 plat = Plataforma(x, faixa, largura_plat, 20, "assets/images/platform.png")
                 plataformas.add(plat); todos.add(plat); plataformas_lista.append(plat)
                 last_x = x
-        # espinhos (não sobrepõem)
+        # espinhos
         espinho_posicoes = []
         for _ in range(10):
             tentativas = 0
@@ -255,7 +231,7 @@ def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinh
                 tentativas += 1
 
 
-        # itens: tentar spawnar por plataforma (inclusive chão)
+        # itens: tentar spawnar por plataforma
         todas_plat_para_itens = [chao] + plataformas_lista
         for plat in todas_plat_para_itens:
             tentativas = 0
@@ -306,7 +282,7 @@ def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinh
     return chao, plataformas_lista
 
 # -----------------------
-# Loop de um level (coleta de itens tratada)
+# Loop de um level
 # -----------------------
 def jogar_level(nivel):
     global camera_shake, music_volume, current_music
