@@ -16,7 +16,7 @@ class Plataforma(pygame.sprite.Sprite):
             ih = img.get_height()
             iw = img.get_width()
             if ih != h:
-                scale_ratio = h / ih
+                scale_ratio = h / ih 
                 new_w = max(1, int(iw * scale_ratio))
                 img = pygame.transform.scale(img, (new_w, h))
                 iw = img.get_width()

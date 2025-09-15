@@ -49,24 +49,108 @@ def play_music(path, volume=0.5, force=False):
 # Tutorial (mini tela)
 # -----------------------
 def mostrar_tutorial(tela, clock):
+    import os
     fonte_titulo = pygame.font.SysFont(None, 56, bold=True)
-    fonte = pygame.font.SysFont(None, 28)
-    btn = Botao(LARGURA//2 - 100, ALTURA - 100, 200, 48, "Continuar")
+    fonte = pygame.font.SysFont(None, 26)
+    btn = Botao(LARGURA//2 - 100, ALTURA - 80, 200, 48, "Continuar")
 
+    # candidates - tente vários nomes comuns para cada asset
+    candidates = {
+        "item": [
+            "assets/images/item.png",
+            "assets/images/item_01.png",
+            "assets/images/collectable.png",
+            "assets/images/coin.png"
+        ],
+        "powerup": [
+            "assets/images/powerup.png",
+            "assets/images/power_up.png",
+            "assets/images/power-up.png",
+            "assets/images/powerup_01.png"
+        ],
+        "enemy": [
+            "assets/images/enemy_idle.png",
+            "assets/images/enemy_idle_01.png",
+            "assets/images/enemy.png",
+            "assets/images/enemy_idle01.png"
+        ],
+        "spike": [
+            "assets/images/spike.png",
+            "assets/images/spike_small.png",
+            "assets/images/espinho.png"
+        ]
+    }
+
+    def try_load(list_paths):
+        for p in list_paths:
+            try:
+                if os.path.exists(p):
+                    img = pygame.image.load(p)
+                    # convert_alpha pode falhar se display não estiver inicializado; tente com fallback
+                    try:
+                        img = img.convert_alpha()
+                    except Exception:
+                        img = img.convert()
+                    print(f"[Tutorial] carregou: {p}")
+                    return img
+            except Exception as e:
+                print(f"[Tutorial] erro ao carregar {p}: {e}")
+        print(f"[Tutorial] não encontrou nenhum de: {list_paths}")
+        return None
+
+    img_item = try_load(candidates["item"])
+    img_powerup = try_load(candidates["powerup"])
+    img_enemy = try_load(candidates["enemy"])
+    img_spike = try_load(candidates["spike"])
+
+    # placeholders simples (32x32) caso a imagem não exista
+    def placeholder(color, label=None):
+        s = pygame.Surface((32, 32), pygame.SRCALPHA)
+        pygame.draw.rect(s, color, s.get_rect(), border_radius=6)
+        if label:
+            try:
+                f = pygame.font.SysFont(None, 18)
+                text = f.render(label, True, (255,255,255))
+                tr = text.get_rect(center=(16,16))
+                s.blit(text, tr)
+            except Exception:
+                pass
+        return s
+
+    if img_item is None:
+        img_item = placeholder((200,160,40), "I")
+    if img_powerup is None:
+        img_powerup = placeholder((120,200,255), "P")
+    if img_enemy is None:
+        img_enemy = placeholder((200,60,60), "E")
+    if img_spike is None:
+        img_spike = placeholder((100,100,100), "!")
+
+    # linhas com sprites
     linhas = [
-        "🎯 Objetivo: coletar todos os itens e chegar ao portal!",
-        "⭐ Itens: aumentam sua pontuação.",
-        "💎 PowerUp: permite pular duplo e atirar projéteis.",
-        "👾 Inimigos: evite-os ou derrote com projéteis.",
-        "☠️ Espinhos: causam dano imediato.",
-        "",
-        "🎮 Controles:",
-        "→ / ← : mover",
-        "SPACE : pular / pulo duplo",
-        "X : atirar (se habilitado)",
-        "↓ : atravessar plataformas finas",
-        "ESC : abrir menu"
+        (img_item,   "Itens: Aumentam sua pontuação."),
+        (img_powerup,"PowerUp: Permite pular duplo e atirar projéteis."),
+        (img_enemy,  "Inimigos: Evite ou derrote com projéteis."),
+        (img_spike,  "Espinhos: Causam dano imediato."),
+        (None,       ""),
+        (None, "Controles:"),
+        (None, "<- / -> : Mover"),
+        (None, "SPACE : Pular / pulo duplo"),
+        (None, "X : Atirar (se habilitado)"),
+        (None, "Seta para baixo : Atravessar plataformas")
     ]
+
+    # debug: mostra o cwd e lista 'assets/images' se quiser (comente se não quiser no console)
+    try:
+        cwd = os.getcwd()
+        imgs_dir = "assets/images"
+        if os.path.exists(imgs_dir):
+            files = ", ".join(os.listdir(imgs_dir)[:50])
+            print(f"[Tutorial] cwd={cwd} - assets/images tem (até 50): {files}")
+        else:
+            print(f"[Tutorial] cwd={cwd} - pasta assets/images NÃO encontrada")
+    except Exception as e:
+        print("[Tutorial] erro ao listar assets:", e)
 
     while True:
         for ev in pygame.event.get():
@@ -82,18 +166,28 @@ def mostrar_tutorial(tela, clock):
         tela.blit(titulo, (LARGURA//2 - titulo.get_width()//2, 40))
 
         y = 120
-        for linha in linhas:
-            txt = fonte.render(linha, True, PRETO)
-            tela.blit(txt, (80, y))
-            y += 34
+        for img, texto in linhas:
+            if img:
+                # garanto escala uniforme (32x32)
+                try:
+                    img_s = pygame.transform.smoothscale(img, (32,32))
+                except Exception:
+                    img_s = pygame.transform.scale(img, (32,32))
+                tela.blit(img_s, (80, y))
+                txt = fonte.render(texto, True, PRETO)
+                tela.blit(txt, (120, y+6))
+            else:
+                txt = fonte.render(texto, True, PRETO)
+                tela.blit(txt, (80, y))
+            y += 40
 
         btn.desenhar(tela)
-
         pygame.display.flip()
         clock.tick(FPS)
 
+
 # -----------------------
-# Transição LEVEL (entra do topo, pausa, sai pra baixo)
+# Transição LEVEL
 # -----------------------
 def mostrar_transicao(tela, clock, nivel):
     fonte = pygame.font.SysFont(None, 84, bold=True)
@@ -129,11 +223,11 @@ def mostrar_transicao(tela, clock, nivel):
         clock.tick(FPS)
 
 # -----------------------
-# Gerador de level (items & inimigos adicionados)
+# Gerador de level
 # -----------------------
 def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinhos, projeteis, particulas):
     # Chão tileado
-    chao = Plataforma(0, ALTURA - 40, mapa_largura, 40, "assets/images/ground.png")
+    chao = Plataforma(0, ALTURA - 60, mapa_largura, 70, "assets/images/groundtest.png")
     plataformas.add(chao); todos.add(chao)
 
     plataformas_lista = []
@@ -147,11 +241,19 @@ def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinh
                 plat = Plataforma(x, faixa, largura_plat, 20, "assets/images/platform.png")
                 plataformas.add(plat); todos.add(plat); plataformas_lista.append(plat)
                 last_x = x
-        # espinhos
+        # espinhos (não sobrepõem)
+        espinho_posicoes = []
         for _ in range(10):
-            x = random.randint(150, mapa_largura - 150)
-            esp = Espinho(x, ALTURA - 40)
-            espinhos.add(esp); todos.add(esp)
+            tentativas = 0
+            while tentativas < 20:  # até 20 tentativas para encontrar posição válida
+                x = random.randint(150, mapa_largura - 150)
+                if all(abs(x - ex) > 80 for ex in espinho_posicoes):  # mínimo 80px de distância
+                    esp = Espinho(x, ALTURA - 60)
+                    espinhos.add(esp); todos.add(esp)
+                    espinho_posicoes.append(x)
+                    break
+                tentativas += 1
+
 
         # itens: tentar spawnar por plataforma (inclusive chão)
         todas_plat_para_itens = [chao] + plataformas_lista
@@ -181,21 +283,21 @@ def gerar_level(mapa_largura, nivel, todos, plataformas, itens, inimigos, espinh
                 x = random.randint(300, mapa_largura - 300)
                 if abs(x - 100) > 150:
                     break
-            inimigo = Inimigo(x, ALTURA - 80, max(0, x - 120), min(mapa_largura, x + 120))
+            inimigo = Inimigo(x, ALTURA - 100, max(0, x - 120), min(mapa_largura, x + 120))
             inimigos.add(inimigo); todos.add(inimigo)
 
-        # powerup adicional por fase normal (garante um powerup por fase, mas não adiciona ao boss aqui)
-        powerup = PowerUp(min(mapa_largura - 100, mapa_largura // 2), ALTURA - 200)
+        # powerup adicionar
+        powerup = PowerUp(mapa_largura // 2, ALTURA - 200)
         itens.add(powerup); todos.add(powerup)
 
     else:
-        # Arena do boss: 2 plataformas fixas (sem spawn massivo)
+        # Arena do boss: 2 plataformas fixas
         plat1 = Plataforma(200, ALTURA - 200, 120, 20, "assets/images/platform.png")
         plat2 = Plataforma(480, ALTURA - 320, 120, 20, "assets/images/platform.png")
         plataformas.add(plat1, plat2); todos.add(plat1, plat2)
         plataformas_lista.extend([plat1, plat2])
 
-        # spawn apenas UM powerup no boss (como você pediu)
+        # spawn apenas UM powerup no boss
         # posiciona no centro da arena
         center_x = mapa_largura // 2
         powerup = PowerUp(center_x, ALTURA - 200)
@@ -243,7 +345,7 @@ def jogar_level(nivel):
     else:
         play_music("assets/sounds/music.mp3", music_volume, force=False)
 
-    goal = Plataforma(MAPA_LARGURA - 80, ALTURA - 120, 80, 80, "assets/images/goal.png")
+    goal = Plataforma(MAPA_LARGURA - 60, ALTURA - 150, 45, 90, "assets/images/goal.png")
     fim_fase.add(goal); todos.add(goal)
 
     # pre-cálculo: quantos itens (não powerups) precisamos coletar
@@ -261,8 +363,6 @@ def jogar_level(nivel):
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
                 pygame.quit(); raise SystemExit
-            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
-                return False
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_x:
                 if jogador.pode_atacar:
                     proj = Projetil(jogador.rect.centerx, jogador.rect.centery, 1 if jogador.facing_right else -1)
@@ -422,15 +522,44 @@ def main():
             nivel += 1
             continue
         elif resultado == "boss_defeated":
-            tela.fill(BRANCO)
-            fonte = pygame.font.SysFont(None, 48)
-            msg = fonte.render("Parabéns! Você derrotou o Chefão e zerou o jogo!", True, (10,120,10))
-            tela.blit(msg, (40, ALTURA//2 - 24))
-            pygame.display.update()
-            pygame.time.wait(4000)
-            break
-        else:
-            break
+            fonte = pygame.font.SysFont(None, 42, bold=True)
+            msg = fonte.render("Parabéns! Você derrotou o Chefão!", True, (10,120,10))
+            msg2 = fonte.render("Você zerou o jogo!", True, (10,120,10))
+            btn_menu = Botao(LARGURA//2 - 100, ALTURA//2 + 80, 200, 48, "Voltar ao Menu")
+
+            alpha_surface = pygame.Surface((LARGURA, ALTURA))
+            alpha_surface.fill(BRANCO)
+
+            fade = 0
+            clock = pygame.time.Clock()
+            esperando = True
+            while esperando:
+                for ev in pygame.event.get():
+                    if ev.type == pygame.QUIT:
+                        pygame.quit(); raise SystemExit
+                    if btn_menu.clicado(ev):
+                        # volta ao menu inicial
+                        escolha, vol = mostrar_menu(tela, clock, music_volume, "start")
+                        music_volume = vol
+                        if escolha == "quit":
+                            pygame.quit(); return
+                        nivel = 1  # reinicia jogo desde o início
+                        esperando = False
+
+                tela.fill(BRANCO)
+                offset_x = int(6 * math.sin(pygame.time.get_ticks() * 0.004))
+                tela.blit(msg, (LARGURA//2 - msg.get_width()//2 + offset_x, ALTURA//2 - 60))
+                tela.blit(msg2, (LARGURA//2 - msg2.get_width()//2, ALTURA//2 - 20))
+                btn_menu.desenhar(tela)
+
+                if fade < 255:
+                    alpha_surface.set_alpha(255 - fade)
+                    tela.blit(alpha_surface, (0,0))
+                    fade += 5
+
+                pygame.display.update()
+                clock.tick(FPS)
+            continue  # volta ao loop principal de levels
 
     pygame.quit()
 
